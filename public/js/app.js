@@ -4,6 +4,28 @@ const App = {
   init() {
     this.bindUpload();
     this.bindNavigation();
+    this.renderHistory();
+  },
+
+  renderHistory() {
+    const history = JSON.parse(localStorage.getItem('splitzy_history') || '[]');
+    if (!history.length) return;
+    document.getElementById('history-section').classList.remove('hidden');
+    document.getElementById('history-list').innerHTML = history.slice(0, 10).map(h => {
+      const date = new Date(h.createdAt).toLocaleDateString();
+      return `<div class="assign-row" style="cursor:pointer" onclick="window.open('/s/${h.id}?owner=1','_blank')">
+        <span class="item-name">${date} — ${h.itemCount} items</span>
+        <span class="item-price">$${h.total.toFixed(2)}</span>
+        <span class="shared-badge">${Object.keys(h.selections || {}).length} responses</span>
+      </div>`;
+    }).join('');
+  },
+
+  saveToHistory(id) {
+    const history = JSON.parse(localStorage.getItem('splitzy_history') || '[]');
+    const total = this.state.items.reduce((s, it) => s + it.price, 0) + this.state.tax + this.state.tip;
+    history.unshift({ id, itemCount: this.state.items.length, total, createdAt: Date.now(), selections: {} });
+    localStorage.setItem('splitzy_history', JSON.stringify(history.slice(0, 20)));
   },
 
   showStep(name) {
@@ -236,6 +258,7 @@ const App = {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      this.saveToHistory(data.id);
       const url = `${location.origin}/s/${data.id}`;
       document.getElementById('share-url-main').value = url;
       document.getElementById('owner-dashboard-link').href = `/s/${data.id}?owner=1`;

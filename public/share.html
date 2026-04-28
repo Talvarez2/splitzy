@@ -29,7 +29,7 @@
         <input type="text" id="your-name" placeholder="Your name" maxlength="20">
         <input type="text" id="your-venmo" placeholder="Venmo username (optional)" maxlength="30">
       </div>
-      <p class="hint">Tap items you ordered. Shared items will be split.</p>
+      <p class="hint">Tap once = yours. Tap twice = shared (◑). Tap again to deselect.</p>
       <div id="share-items-list"></div>
       <div class="totals-editor" style="margin-top:16px">
         <div class="field"><label>Your items</label><span id="your-subtotal">$0.00</span></div>
@@ -67,7 +67,8 @@
     const sessionId = location.pathname.split('/s/')[1]?.split('?')[0]?.split('/')[0];
     const isOwner = new URLSearchParams(location.search).get('owner') === '1';
     let session = null;
-    let selected = new Set();
+    // selected: Map of item index → 'mine' | 'shared'
+    let selected = new Map();
 
     async function load() {
       try {
@@ -86,31 +87,60 @@
     function renderSelect() {
       document.getElementById('select-view').classList.remove('hidden');
       const list = document.getElementById('share-items-list');
+      // Count how many others selected each item
+      const otherCounts = {};
+      Object.values(session.selections).forEach(s => {
+        (s.items || []).forEach(i => { otherCounts[i] = (otherCounts[i] || 0) + 1; });
+      });
+
       list.innerHTML = session.items.map((item, i) => {
-        const alreadyTaken = Object.values(session.selections).some(s => s.items.includes(i));
-        return `<div class="assign-row${alreadyTaken ? ' assigned' : ''}" data-idx="${i}" onclick="toggleItem(${i})">
-          <span class="item-check">${selected.has(i) ? '☑' : '☐'}</span>
+        const state = selected.get(i); // undefined, 'mine', 'shared'
+        const others = otherCounts[i] || 0;
+        let check = '☐', cls = '', badge = '';
+        if (state === 'mine') { check = '☑'; cls = ''; }
+        else if (state === 'shared') { check = '◑'; cls = ''; badge = '<span class="shared-badge">shared</span>'; }
+        if (others > 0 && !state) { badge = `<span class="shared-badge">${others} picked</span>`; }
+        else if (others > 0 && state) { badge += `<span class="shared-badge">${others} other${others>1?'s':''}</span>`; }
+        return `<div class="assign-row${cls}" data-idx="${i}" onclick="toggleItem(${i})">
+          <span class="item-check">${check}</span>
           <span class="item-name">${esc(item.name)}</span>
           <span class="item-price">$${item.price.toFixed(2)}</span>
-          ${alreadyTaken ? '<span class="shared-badge">taken</span>' : ''}
+          ${badge}
         </div>`;
       }).join('');
       updateYourTotal();
     }
 
     function toggleItem(i) {
-      if (selected.has(i)) selected.delete(i); else selected.add(i);
+      const cur = selected.get(i);
+      if (!cur) selected.set(i, 'mine');
+      else if (cur === 'mine') selected.set(i, 'shared');
+      else selected.delete(i);
       renderSelect();
     }
 
     function updateYourTotal() {
-      const subtotal = session.items.reduce((s, it, i) => s + (selected.has(i) ? it.price : 0), 0);
+      // For 'mine' items: full price. For 'shared': half price (split with others)
+      let mySubtotal = 0;
+      selected.forEach((state, i) => {
+        const price = session.items[i]?.price || 0;
+        // Count others who also selected this item
+        let others = 0;
+        Object.values(session.selections).forEach(s => {
+          if ((s.items || []).includes(i)) others++;
+        });
+        if (state === 'shared') {
+          mySubtotal += price / (1 + others || 2); // split with at least 1 other
+        } else {
+          mySubtotal += price;
+        }
+      });
       const billSubtotal = session.items.reduce((s, it) => s + it.price, 0);
-      const ratio = billSubtotal > 0 ? subtotal / billSubtotal : 0;
+      const ratio = billSubtotal > 0 ? mySubtotal / billSubtotal : 0;
       const tax = +(session.tax * ratio).toFixed(2);
       const tip = +(session.tip * ratio).toFixed(2);
-      const total = +(subtotal + tax + tip).toFixed(2);
-      document.getElementById('your-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+      const total = +(mySubtotal + tax + tip).toFixed(2);
+      document.getElementById('your-subtotal').textContent = `$${mySubtotal.toFixed(2)}`;
       document.getElementById('your-tax').textContent = `$${tax.toFixed(2)}`;
       document.getElementById('your-tip').textContent = `$${tip.toFixed(2)}`;
       document.getElementById('your-total').textContent = `$${total.toFixed(2)}`;
@@ -123,7 +153,7 @@
       const res = await fetch(`/api/session?id=${sessionId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, venmo, selectedItems: [...selected] }),
+        body: JSON.stringify({ name, venmo, selectedItems: [...selected.keys()], sharedItems: [...selected.entries()].filter(([,v]) => v === 'shared').map(([k]) => k) }),
       });
       if (res.ok) {
         document.getElementById('select-view').classList.add('hidden');
