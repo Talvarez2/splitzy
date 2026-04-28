@@ -8,6 +8,10 @@
   <style>
     .assign-row.claimed-locked { opacity: 0.45; pointer-events: none; }
     .assign-row.claimed-locked .item-name { text-decoration: line-through; }
+    .summary-card.paid { opacity: 0.55; }
+    .paid-badge { color: var(--success, #34c759); font-weight: 700; margin-left: 8px; }
+    .btn-paid { font-size: 0.75rem; padding: 4px 10px; margin-left: auto; }
+    .btn-paid.is-paid { background: var(--success, #34c759); color: #fff; border-color: var(--success, #34c759); }
   </style>
 </head>
 <body>
@@ -224,6 +228,7 @@
         const tax = +(session.tax * ratio).toFixed(2);
         const tip = +(session.tip * ratio).toFixed(2);
         const total = +(sub + tax + tip).toFixed(2);
+        const paid = session.paid?.[name];
         // Venmo: use https fallback for desktop, venmo:// for mobile
         let venmoLink = '';
         if (sel.venmo) {
@@ -232,8 +237,10 @@
           const webUrl = `https://venmo.com/${sel.venmo}?txn=charge&amount=${total}&note=${note}`;
           venmoLink = `<a href="${webUrl}" onclick="window.location='${mobileUrl}';return false;" class="btn btn-sm" style="margin-left:8px" target="_blank">💸 Request $${total}</a>`;
         }
-        return `<div class="summary-card" style="border-color:#4ecdc4">
-          <h3>${esc(name)} ${venmoLink}</h3>
+        return `<div class="summary-card${paid ? ' paid' : ''}" style="border-color:#4ecdc4">
+          <h3>${esc(name)} ${paid ? '<span class="paid-badge">✅ Paid</span>' : ''} ${venmoLink}
+            <button class="btn btn-sm btn-paid${paid ? ' is-paid' : ''}" onclick="togglePaid('${esc(name)}')">${paid ? 'Undo' : '💰 Paid'}</button>
+          </h3>
           <div class="summary-items">${sel.items.map(i => {
             const it = session.items[i];
             return it ? `<div class="row"><span>${esc(it.name)}</span><span>$${it.price.toFixed(2)}</span></div>` : '';
@@ -257,6 +264,18 @@
         if (res.ok) { session = await res.json(); renderOwner(); }
       } catch {}
     }, 10000);
+
+    async function togglePaid(name) {
+      const paid = !(session.paid?.[name]);
+      await fetch(`/api/session?id=${sessionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'markPaid', name, paid }),
+      });
+      if (!session.paid) session.paid = {};
+      session.paid[name] = paid;
+      renderOwner();
+    }
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 

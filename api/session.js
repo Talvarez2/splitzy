@@ -14,8 +14,17 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
+    const { action, name, paid, venmo, selectedItems, sharedItems } = req.body;
+
+    if (action === 'markPaid') {
+      if (!name) return res.status(400).json({ error: 'name required' });
+      if (!session.paid) session.paid = {};
+      session.paid[name] = !!paid;
+      await kv.set(`session:${id}`, JSON.stringify(session), { ex: 86400 });
+      return res.status(200).json({ ok: true });
+    }
+
     // A friend submits their selection
-    const { name, venmo, selectedItems, sharedItems } = req.body;
     if (!name) return res.status(400).json({ error: 'name required' });
 
     session.selections[name] = {
