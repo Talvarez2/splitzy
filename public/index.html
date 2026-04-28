@@ -136,5 +136,64 @@
     });
     if (document.body.classList.contains('dark')) document.getElementById('dark-toggle').textContent = '☀️';
   </script>
+  <script>
+    // Pinch-to-zoom and pan for receipt reference image
+    (function() {
+      const img = document.getElementById('receipt-img-ref');
+      if (!img) return;
+      let scale = 1, tx = 0, ty = 0, startDist = 0, startScale = 1, startTx = 0, startTy = 0, startMidX = 0, startMidY = 0;
+      let isPanning = false, panStartX = 0, panStartY = 0;
+
+      function apply() { img.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`; }
+
+      function dist(t) { return Math.hypot(t[1].clientX - t[0].clientX, t[1].clientY - t[0].clientY); }
+
+      img.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          startDist = dist(e.touches);
+          startScale = scale;
+          startMidX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          startMidY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          startTx = tx; startTy = ty;
+        } else if (e.touches.length === 1 && scale > 1) {
+          isPanning = true;
+          panStartX = e.touches[0].clientX - tx;
+          panStartY = e.touches[0].clientY - ty;
+        }
+      }, { passive: false });
+
+      img.addEventListener('touchmove', function(e) {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          scale = Math.min(5, Math.max(1, startScale * (dist(e.touches) / startDist)));
+          const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          tx = startTx + (midX - startMidX);
+          ty = startTy + (midY - startMidY);
+          apply();
+        } else if (e.touches.length === 1 && isPanning) {
+          e.preventDefault();
+          tx = e.touches[0].clientX - panStartX;
+          ty = e.touches[0].clientY - panStartY;
+          apply();
+        }
+      }, { passive: false });
+
+      img.addEventListener('touchend', function() {
+        isPanning = false;
+        if (scale <= 1) { scale = 1; tx = 0; ty = 0; apply(); }
+      });
+
+      // Double-tap to reset
+      let lastTap = 0;
+      img.addEventListener('touchend', function(e) {
+        if (e.touches.length > 0) return;
+        const now = Date.now();
+        if (now - lastTap < 300) { scale = 1; tx = 0; ty = 0; apply(); }
+        lastTap = now;
+      });
+    })();
+  </script>
 </body>
 </html>
