@@ -130,7 +130,11 @@ const App = {
   renderAssignment() {
     this.renderPeopleChips();
     const list = document.getElementById('assignment-list');
-    list.innerHTML = this.state.items.map((item, i) => {
+    // Sort: unassigned first, then assigned
+    const sorted = this.state.items.map((item, i) => ({ item, i }));
+    sorted.sort((a, b) => (a.item.assignedTo.length > 0 ? 1 : 0) - (b.item.assignedTo.length > 0 ? 1 : 0));
+    list.innerHTML = sorted.map(({ item, i }) => {
+      const assigned = item.assignedTo.length > 0;
       const tags = item.assignedTo.map(pid => {
         const p = People.get(pid);
         return p ? `<span class="assign-tag" style="background:${p.color}">${People.initials(p.name)}</span>` : '';
@@ -140,7 +144,7 @@ const App = {
         const active = item.assignedTo.includes(p.id);
         return `<button class="btn btn-sm" style="background:${active ? p.color : 'transparent'}; color:${active ? '#fff' : p.color}; border-color:${p.color}; min-width:36px; padding:4px 8px;" onclick="App.toggleAssignment(${i},${p.id})">${People.initials(p.name)}</button>`;
       }).join('');
-      return `<div class="assign-row">
+      return `<div class="assign-row${assigned ? ' assigned' : ''}">
         <span class="item-name">${this.escHtml(item.name)}</span>
         <span class="item-price">$${item.price.toFixed(2)}</span>
         <span class="tags">${tags}${shared}</span>
@@ -199,7 +203,17 @@ const App = {
       this.showStep('summary');
     });
     document.getElementById('back-to-assign').addEventListener('click', () => this.showStep('people'));
+    document.getElementById('save-pdf').addEventListener('click', () => this.savePDF());
     document.getElementById('start-over').addEventListener('click', () => location.reload());
+  },
+
+  savePDF() {
+    const summaryEl = document.getElementById('step-summary');
+    // Hide buttons during print
+    const buttons = summaryEl.querySelectorAll('.btn');
+    buttons.forEach(b => b.style.display = 'none');
+    window.print();
+    buttons.forEach(b => b.style.display = '');
   },
 
   escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }

@@ -126,3 +126,17 @@ header h1 { font-size: 2rem; }
 
 .sample-link { color: var(--primary); text-decoration: none; font-weight: 500; }
 .sample-link:hover { text-decoration: underline; }
+
+/* Assigned items styling */
+.assign-row.assigned { opacity: 0.55; }
+.assign-row.assigned .item-name { text-decoration: line-through; }
+
+/* Print / PDF styles */
+@media print {
+  body { background: #fff; padding: 0; }
+  header, .step:not(.active), .btn, .people-bar, .hint, #back-to-assign, #save-pdf, #start-over { display: none !important; }
+  #step-summary { display: block !important; }
+  .card { box-shadow: none; padding: 0; }
+  .summary-card { break-inside: avoid; page-break-inside: avoid; margin-bottom: 16px; }
+  @page { margin: 1cm; }
+}
