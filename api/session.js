@@ -15,12 +15,13 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     // A friend submits their selection
-    const { name, venmo, selectedItems } = req.body;
+    const { name, venmo, selectedItems, sharedItems } = req.body;
     if (!name) return res.status(400).json({ error: 'name required' });
 
     session.selections[name] = {
       venmo: venmo || '',
       items: selectedItems || [],
+      sharedItems: sharedItems || [],
       submittedAt: Date.now(),
     };
 
