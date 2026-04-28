@@ -130,9 +130,18 @@ const App = {
   renderAssignment() {
     this.renderPeopleChips();
     const list = document.getElementById('assignment-list');
-    // Sort: unassigned first, then assigned
+    // Sort: unassigned first, then grouped by assigned person
     const sorted = this.state.items.map((item, i) => ({ item, i }));
-    sorted.sort((a, b) => (a.item.assignedTo.length > 0 ? 1 : 0) - (b.item.assignedTo.length > 0 ? 1 : 0));
+    sorted.sort((a, b) => {
+      const aAssigned = a.item.assignedTo.length > 0;
+      const bAssigned = b.item.assignedTo.length > 0;
+      if (aAssigned !== bAssigned) return aAssigned ? 1 : -1;
+      if (aAssigned && bAssigned) {
+        // Group by first assigned person
+        return a.item.assignedTo[0] - b.item.assignedTo[0];
+      }
+      return 0;
+    });
     list.innerHTML = sorted.map(({ item, i }) => {
       const assigned = item.assignedTo.length > 0;
       const tags = item.assignedTo.map(pid => {
