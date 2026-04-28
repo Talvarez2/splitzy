@@ -30,7 +30,11 @@ header h1 { font-size: 2rem; }
 .btn-danger { color: var(--danger); border-color: var(--danger); }
 
 .step { display: none; }
-.step.active { display: block; animation: fadeIn 0.3s ease; }
+.step.active { display: block; }
+.step.slide-in-left { display: block; animation: slideInLeft 0.25s ease both; }
+.step.slide-in-right { display: block; animation: slideInRight 0.25s ease both; }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 /* Drop zone */

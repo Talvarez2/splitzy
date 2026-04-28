@@ -28,9 +28,15 @@ const App = {
     localStorage.setItem('splitzy_history', JSON.stringify(history.slice(0, 20)));
   },
 
+  _stepOrder: ['upload', 'items', 'people', 'summary'],
+
   showStep(name) {
-    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-    document.getElementById(`step-${name}`).classList.add('active');
+    const oldIdx = this._stepOrder.indexOf(this.state.step);
+    const newIdx = this._stepOrder.indexOf(name);
+    const forward = newIdx >= oldIdx;
+    document.querySelectorAll('.step').forEach(s => { s.classList.remove('active', 'slide-in-left', 'slide-in-right'); });
+    const el = document.getElementById(`step-${name}`);
+    el.classList.add('active', forward ? 'slide-in-left' : 'slide-in-right');
     this.state.step = name;
   },
 
