@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splitzy — Split Bills Easily</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <h1>🍽️ Splitzy</h1>
+    <p class="tagline">Split bills with friends, fairly.</p>
+  </header>
+
+  <main>
+    <!-- Step 1: Upload -->
+    <section id="step-upload" class="step active">
+      <div class="card">
+        <h2>Upload Your Receipt</h2>
+        <div id="drop-zone" class="drop-zone">
+          <div class="drop-zone-content">
+            <span class="drop-icon">📸</span>
+            <p>Drag & drop a receipt photo here</p>
+            <p class="subtle">or</p>
+            <label class="btn" for="file-input">Choose File</label>
+            <input type="file" id="file-input" accept="image/*" hidden>
+          </div>
+        </div>
+        <div id="upload-preview" class="preview hidden">
+          <img id="receipt-img" alt="Receipt preview">
+          <div id="ocr-status" class="status">
+            <div class="spinner"></div>
+            <span>Reading receipt…</span>
+            <div id="ocr-progress" class="progress-bar"><div class="progress-fill"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 2: Edit Items -->
+    <section id="step-items" class="step">
+      <div class="card split-view">
+        <div class="receipt-reference">
+          <img id="receipt-img-ref" alt="Receipt">
+        </div>
+        <div class="items-editor">
+          <h2>Review Items</h2>
+          <div id="items-list"></div>
+          <button id="add-item-btn" class="btn btn-sm">+ Add Item</button>
+          <div class="totals-editor">
+            <div class="field"><label>Subtotal</label><span id="subtotal-display">$0.00</span></div>
+            <div class="field"><label>Tax</label><input type="number" id="tax-input" step="0.01" min="0" value="0"></div>
+            <div class="field"><label>Tip</label><input type="number" id="tip-input" step="0.01" min="0" value="0"></div>
+            <div class="field total"><label>Total</label><span id="total-display">$0.00</span></div>
+          </div>
+          <button id="next-to-people" class="btn btn-primary">Next: Assign People →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: People & Assignment -->
+    <section id="step-people" class="step">
+      <div class="card">
+        <h2>Assign Items to People</h2>
+        <div class="people-bar">
+          <div id="people-list" class="people-chips"></div>
+          <div class="add-person">
+            <input type="text" id="person-name-input" placeholder="Name" maxlength="20">
+            <button id="add-person-btn" class="btn btn-sm">+ Add</button>
+          </div>
+        </div>
+        <p class="hint">Click items to assign. Click again to cycle people or share.</p>
+        <div id="assignment-list"></div>
+        <button id="next-to-summary" class="btn btn-primary">Next: View Summary →</button>
+      </div>
+    </section>
+
+    <!-- Step 4: Summary -->
+    <section id="step-summary" class="step">
+      <div class="card">
+        <h2>Split Summary</h2>
+        <div id="unassigned-warning" class="warning hidden">⚠️ Some items are unassigned!</div>
+        <div id="summary-cards"></div>
+        <div id="total-check" class="total-check"></div>
+        <button id="back-to-assign" class="btn">← Back to Assignment</button>
+        <button id="start-over" class="btn">Start Over</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="/js/ocr.js"></script>
+  <script src="/js/parser.js"></script>
+  <script src="/js/people.js"></script>
+  <script src="/js/calculator.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
