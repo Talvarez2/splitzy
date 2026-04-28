@@ -1,46 +1,66 @@
-# Splitzy
+# Splitzy 🍽️
 
 Split restaurant bills with friends. Upload a receipt photo, assign items to people, and get the exact amount each person owes — including their share of tax and tip.
 
-## How It Works
+## Usage
 
-1. Upload a photo of your receipt
-2. The app extracts line items, tax, and tip using OCR
-3. Edit/correct any misreads
-4. Add your friends and assign items to each person
-5. Get a breakdown of what each person owes (items + proportional tax & tip)
-6. Share a link so friends can self-select their items (Phase 2)
+1. **Upload** — Drag & drop or select a receipt photo (or try the sample receipt)
+2. **Review** — Edit OCR-extracted items, prices, tax, and tip
+3. **Assign** — Add people and tap items to assign them (supports shared items)
+4. **Split** — View per-person breakdown with proportional tax & tip
 
-## Tech
+## Tech Stack
 
-- Frontend: Vanilla HTML/CSS/JavaScript
-- OCR: Tesseract.js (in-browser)
-- Hosting: Vercel (static + serverless functions)
-- No database required for Phase 1
+- **Frontend**: Vanilla HTML/CSS/JavaScript (no frameworks)
+- **OCR**: [Tesseract.js v5](https://github.com/naptha/tesseract.js) loaded from CDN
+- **Hosting**: [Vercel](https://vercel.com) (static deployment)
+- **No backend required** for Phase 1
+
+## Project Structure
+
+```
+public/
+├── index.html          # Main SPA
+├── css/style.css       # Mobile-first styles
+├── js/
+│   ├── app.js          # Main controller & state
+│   ├── ocr.js          # Tesseract.js integration
+│   ├── parser.js       # Receipt text → structured data
+│   ├── people.js       # People management
+│   └── calculator.js   # Split calculation engine
+└── assets/
+    └── sample-receipt.svg
+vercel.json             # Vercel deployment config
+```
+
+## Local Development
+
+Serve the `public/` directory with any static server:
+
+```bash
+npx serve public
+# or
+python3 -m http.server -d public 8000
+```
+
+## Deploy to Vercel
+
+```bash
+vercel --prod
+```
+
+Or connect the GitHub repo to Vercel for automatic deployments.
+
+## How Splitting Works
+
+- Each person pays for their assigned items
+- Shared items are split equally among assignees
+- Tax and tip are distributed proportionally based on each person's subtotal
+- Formula: `person_tax = (person_subtotal / bill_subtotal) * tax`
 
 ## Roadmap
 
-### Phase 1 — MVP (current)
-- Upload receipt image → OCR extracts line items, tax, tip
-- Manual correction UI for OCR misreads
-- Create people, assign items via click/drag
-- Calculate splits: each person's items + proportional share of tax & tip
-- Summary view with per-person totals
-
-### Phase 2 — Shareable Sessions
-- Generate unique shareable link per receipt
-- Others open link and self-select their items
-- Enter Venmo username → generate Venmo deep links for payment requests
-- Real-time updates via WebSocket or polling
-- Serverless API for session persistence (Vercel KV or similar)
-
-### Phase 3 — Polish
-- Account system, receipt history
-- Group presets (frequent dining friends)
-- QR code for sharing session link at the table
-- Push notifications when all friends have selected
-
-### Phase 4 — Mobile
-- PWA support with camera capture
-- Native-like experience on mobile
-- Offline receipt scanning with sync
+- [x] Phase 1 — Receipt upload, OCR, item editing, people assignment, split calculation
+- [ ] Phase 2 — Shareable sessions with unique links, Venmo deep links
+- [ ] Phase 3 — Accounts, receipt history, group presets, QR sharing
+- [ ] Phase 4 — PWA with camera capture, offline support

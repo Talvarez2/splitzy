@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600">
+  <rect width="400" height="600" fill="#fff"/>
+  <style>text { font-family: monospace; font-size: 14px; fill: #222; }</style>
+  <text x="200" y="40" text-anchor="middle" font-size="18" font-weight="bold">THE HUNGRY FORK</text>
+  <text x="200" y="60" text-anchor="middle" font-size="12">123 Main St, Anytown USA</text>
+  <text x="200" y="78" text-anchor="middle" font-size="12">Tel: (555) 123-4567</text>
+  <text x="200" y="100" text-anchor="middle" font-size="12">04/28/2026  7:32 PM</text>
+  <line x1="30" y1="115" x2="370" y2="115" stroke="#222" stroke-dasharray="4"/>
+  <text x="40" y="140">Margherita Pizza</text><text x="360" y="140" text-anchor="end">14.99</text>
+  <text x="40" y="162">Caesar Salad</text><text x="360" y="162" text-anchor="end">11.50</text>
+  <text x="40" y="184">Grilled Salmon</text><text x="360" y="184" text-anchor="end">22.95</text>
+  <text x="40" y="206">Pasta Carbonara</text><text x="360" y="206" text-anchor="end">16.75</text>
+  <text x="40" y="228">2x Iced Tea</text><text x="360" y="228" text-anchor="end">7.00</text>
+  <text x="40" y="250">Craft Beer IPA</text><text x="360" y="250" text-anchor="end">8.50</text>
+  <text x="40" y="272">Chocolate Cake</text><text x="360" y="272" text-anchor="end">9.95</text>
+  <line x1="30" y1="290" x2="370" y2="290" stroke="#222" stroke-dasharray="4"/>
+  <text x="40" y="315">Subtotal</text><text x="360" y="315" text-anchor="end">91.64</text>
+  <text x="40" y="337">Tax</text><text x="360" y="337" text-anchor="end">7.79</text>
+  <text x="40" y="359">Tip</text><text x="360" y="359" text-anchor="end">18.00</text>
+  <line x1="30" y1="375" x2="370" y2="375" stroke="#222"/>
+  <text x="40" y="400" font-weight="bold" font-size="16">Total</text><text x="360" y="400" text-anchor="end" font-weight="bold" font-size="16">117.43</text>
+  <text x="200" y="440" text-anchor="middle" font-size="12">Thank you for dining with us!</text>
+</svg>

@@ -44,6 +44,14 @@ const App = {
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
     dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
+
+    // Sample receipt
+    document.getElementById('try-sample').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const resp = await fetch('/assets/sample-receipt.svg');
+      const blob = await resp.blob();
+      handleFile(new File([blob], 'sample-receipt.svg', { type: 'image/svg+xml' }));
+    });
   },
 
   onOCRComplete(text) {
