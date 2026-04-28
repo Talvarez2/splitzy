@@ -144,3 +144,20 @@ header h1 { font-size: 2rem; }
 .item-check { font-size: 1.2rem; min-width: 24px; }
 .assign-row[data-idx] { cursor: pointer; }
 .assign-row[data-idx]:active { transform: scale(0.98); }
+
+/* Dark mode */
+body.dark { --bg: #1a1a2e; --card: #16213e; --text: #e0e0e0; --subtle: #8888aa; --shadow: 0 2px 12px rgba(0,0,0,0.3); }
+body.dark .drop-zone { border-color: #444; }
+body.dark .drop-zone.dragover { border-color: var(--primary); background: #1a2744; }
+body.dark .item-row:hover, body.dark .assign-row:hover { background: #1a2744; }
+body.dark .item-row input, body.dark .field input, body.dark .add-person input { background: #0f1a30; color: #e0e0e0; border-color: #333; }
+body.dark .totals-editor, body.dark .field.total, body.dark .summary-subtotals { border-color: #333; }
+body.dark .summary-card { background: #0f1a30; }
+body.dark .warning { background: #3e2700; color: #ffb74d; }
+body.dark .total-check.match { background: #1b3a1b; color: #66bb6a; }
+body.dark .total-check.mismatch { background: #3a1b1b; color: #ef5350; }
+body.dark .btn { background: #1a2744; color: #e0e0e0; border-color: #444; }
+body.dark .btn:hover { background: #243b5e; }
+body.dark .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+header { position: relative; }

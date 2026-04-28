@@ -238,6 +238,7 @@ const App = {
     });
     document.getElementById('back-to-assign').addEventListener('click', () => this.showStep('people'));
     document.getElementById('share-bill').addEventListener('click', () => this.shareBill());
+    document.getElementById('copy-summary').addEventListener('click', () => this.copySummary());
     document.getElementById('save-pdf').addEventListener('click', () => this.savePDF());
     document.getElementById('start-over').addEventListener('click', () => location.reload());
   },
@@ -275,7 +276,7 @@ const App = {
     const container = document.getElementById('group-list');
     if (!container) return;
     container.innerHTML = groups.map((g, i) =>
-      `<button class="btn btn-sm" style="font-size:0.75rem" onclick="App.loadGroup(${i})">${this.escHtml(g.name)} (${g.people.length})</button>`
+      `<span style="display:inline-flex;align-items:center;gap:2px"><button class="btn btn-sm" style="font-size:0.75rem" onclick="App.loadGroup(${i})">${this.escHtml(g.name)} (${g.people.length})</button><button class="btn btn-sm btn-danger" style="font-size:0.65rem;padding:2px 6px" onclick="App.deleteGroup(${i})">✕</button></span>`
     ).join('');
   },
 
@@ -322,6 +323,21 @@ const App = {
       btn.disabled = false;
       alert('Failed to create share link: ' + e.message);
     }
+  },
+
+  copySummary() {
+    const results = Calculator.calculate(this.state.items, People.list, this.state.tax, this.state.tip);
+    const lines = ['🍽️ Splitzy Bill Split', ''];
+    results.forEach(r => {
+      lines.push(`${r.person.name}: $${r.total.toFixed(2)}`);
+      r.items.forEach(it => lines.push(`  ${it.name}${it.shared ? ` (÷${it.sharedWith})` : ''}: $${it.share.toFixed(2)}`));
+      lines.push(`  Tax: $${r.tax.toFixed(2)} | Tip: $${r.tip.toFixed(2)}`);
+      lines.push('');
+    });
+    navigator.clipboard.writeText(lines.join('\n'));
+    const btn = document.getElementById('copy-summary');
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy Summary', 2000);
   },
 
   savePDF() {

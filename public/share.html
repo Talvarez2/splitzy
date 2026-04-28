@@ -25,6 +25,7 @@
     <!-- Selection view -->
     <div id="select-view" class="card hidden">
       <h2>What did you have?</h2>
+      <p id="bill-info" class="subtle" style="margin-bottom:8px"></p>
       <div class="add-person" style="margin-bottom:16px">
         <input type="text" id="your-name" placeholder="Your name" maxlength="20">
         <input type="text" id="your-venmo" placeholder="Venmo username (optional)" maxlength="30">
@@ -53,7 +54,8 @@
     <!-- Owner dashboard -->
     <div id="owner-view" class="card hidden">
       <h2>📋 Selections</h2>
-      <p class="hint">Share this link with your friends. Refresh to see updates.</p>
+      <p id="owner-bill-info" class="subtle" style="margin-bottom:8px"></p>
+      <p class="hint">Share this link with your friends. Auto-refreshes every 10s.</p>
       <div class="add-person" style="margin-bottom:16px">
         <input type="text" id="share-url" readonly style="flex:1;font-size:0.85rem">
         <button id="copy-link" class="btn btn-sm">Copy</button>
@@ -64,6 +66,10 @@
   </main>
 
   <script>
+    // Dark mode
+    const dm = localStorage.getItem('splitzy_dark');
+    if (dm === '1' || (!dm && matchMedia('(prefers-color-scheme:dark)').matches)) document.body.classList.add('dark');
+
     const sessionId = location.pathname.split('/s/')[1]?.split('?')[0]?.split('/')[0];
     const isOwner = new URLSearchParams(location.search).get('owner') === '1';
     let session = null;
@@ -86,6 +92,9 @@
 
     function renderSelect() {
       document.getElementById('select-view').classList.remove('hidden');
+      const billSubtotal = session.items.reduce((s, it) => s + it.price, 0);
+      const billTotal = billSubtotal + session.tax + session.tip;
+      document.getElementById('bill-info').textContent = `${session.items.length} items · $${billTotal.toFixed(2)} total`;
       const list = document.getElementById('share-items-list');
       // Count how many others selected each item
       const otherCounts = {};
@@ -183,10 +192,14 @@
       };
 
       const billSubtotal = session.items.reduce((s, it) => s + it.price, 0);
+      const billTotal = billSubtotal + session.tax + session.tip;
+      // Show bill info
+      document.getElementById('owner-bill-info').textContent = `${session.items.length} items · $${billTotal.toFixed(2)} total (tax $${session.tax.toFixed(2)} + tip $${session.tip.toFixed(2)})`;
+
       const list = document.getElementById('selections-list');
       const entries = Object.entries(session.selections);
       if (!entries.length) {
-        list.innerHTML = '<p class="subtle">No one has selected yet.</p>';
+        list.innerHTML = '<p class="subtle">No one has selected yet. Waiting for responses...</p>';
         return;
       }
       list.innerHTML = entries.map(([name, sel]) => {
@@ -195,9 +208,14 @@
         const tax = +(session.tax * ratio).toFixed(2);
         const tip = +(session.tip * ratio).toFixed(2);
         const total = +(sub + tax + tip).toFixed(2);
-        const venmoLink = session.venmoUser && sel.venmo
-          ? `<a href="venmo://paycharge?txn=charge&recipients=${sel.venmo}&amount=${total}&note=${encodeURIComponent('Splitzy: bill split')}" class="btn btn-sm" style="margin-left:8px">Request $${total}</a>`
-          : sel.venmo ? `<span class="subtle">@${esc(sel.venmo)}</span>` : '';
+        // Venmo: use https fallback for desktop, venmo:// for mobile
+        let venmoLink = '';
+        if (sel.venmo) {
+          const note = encodeURIComponent('Splitzy: bill split');
+          const mobileUrl = `venmo://paycharge?txn=charge&recipients=${sel.venmo}&amount=${total}&note=${note}`;
+          const webUrl = `https://venmo.com/${sel.venmo}?txn=charge&amount=${total}&note=${note}`;
+          venmoLink = `<a href="${webUrl}" onclick="window.location='${mobileUrl}';return false;" class="btn btn-sm" style="margin-left:8px" target="_blank">💸 Request $${total}</a>`;
+        }
         return `<div class="summary-card" style="border-color:#4ecdc4">
           <h3>${esc(name)} ${venmoLink}</h3>
           <div class="summary-items">${sel.items.map(i => {
@@ -215,6 +233,14 @@
     }
 
     document.getElementById('refresh-btn')?.addEventListener('click', load);
+
+    // Auto-refresh owner dashboard every 10s
+    if (isOwner) setInterval(async () => {
+      try {
+        const res = await fetch(`/api/session?id=${sessionId}`);
+        if (res.ok) { session = await res.json(); renderOwner(); }
+      } catch {}
+    }, 10000);
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
