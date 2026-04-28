@@ -48,9 +48,9 @@ const App = {
     // Sample receipt
     document.getElementById('try-sample').addEventListener('click', async (e) => {
       e.preventDefault();
-      const resp = await fetch('/assets/sample-receipt.svg');
+      const resp = await fetch('assets/sample-receipt.png');
       const blob = await resp.blob();
-      handleFile(new File([blob], 'sample-receipt.svg', { type: 'image/svg+xml' }));
+      handleFile(new File([blob], 'sample-receipt.png', { type: 'image/png' }));
     });
   },
 
