@@ -1,5 +1,7 @@
 # Splitzy 🍽️
 
+**[Try it live →](https://splitzy-rose.vercel.app)**
+
 Split restaurant bills with friends. Upload a receipt photo, assign items to people, and get the exact amount each person owes — including their share of tax and tip.
 
 ## Usage
