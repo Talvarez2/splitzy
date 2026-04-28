@@ -39,7 +39,7 @@ const App = {
       }
     };
 
-    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('click', (e) => { if (e.target.closest('label, a')) return; fileInput.click(); });
     fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
