@@ -62,6 +62,9 @@ const App = {
     document.getElementById('receipt-img-ref').src = this.state.imageDataUrl;
     this.renderItems();
     this.showStep('items');
+    if (!parsed.items.length) {
+      alert('OCR could not detect items automatically. You can add them manually using the "+ Add Item" button while referencing the receipt image on the left.');
+    }
   },
 
   renderItems() {
