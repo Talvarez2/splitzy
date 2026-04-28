@@ -63,6 +63,7 @@ const App = {
 
     dropZone.addEventListener('click', (e) => { if (e.target.closest('label, a')) return; fileInput.click(); });
     fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+    document.getElementById('camera-input').addEventListener('change', (e) => handleFile(e.target.files[0]));
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
     dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
@@ -229,6 +230,8 @@ const App = {
     });
     document.getElementById('add-person-btn').addEventListener('click', () => this.addPerson());
     document.getElementById('person-name-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') this.addPerson(); });
+    document.getElementById('save-group-btn').addEventListener('click', () => this.saveGroup());
+    this.renderGroups();
     document.getElementById('next-to-summary').addEventListener('click', () => {
       this.renderSummary();
       this.showStep('summary');
@@ -237,6 +240,50 @@ const App = {
     document.getElementById('share-bill').addEventListener('click', () => this.shareBill());
     document.getElementById('save-pdf').addEventListener('click', () => this.savePDF());
     document.getElementById('start-over').addEventListener('click', () => location.reload());
+  },
+
+  // --- Groups ---
+  saveGroup() {
+    if (!People.list.length) return;
+    const name = prompt('Group name:');
+    if (!name) return;
+    const groups = JSON.parse(localStorage.getItem('splitzy_groups') || '[]');
+    groups.push({ name, people: People.list.map(p => p.name) });
+    localStorage.setItem('splitzy_groups', JSON.stringify(groups));
+    this.renderGroups();
+  },
+
+  loadGroup(idx) {
+    const groups = JSON.parse(localStorage.getItem('splitzy_groups') || '[]');
+    const group = groups[idx];
+    if (!group) return;
+    People.list = []; People._nextId = 0;
+    this.state.items.forEach(it => { it.assignedTo = []; });
+    group.people.forEach(name => People.add(name));
+    this.renderAssignment();
+  },
+
+  deleteGroup(idx) {
+    const groups = JSON.parse(localStorage.getItem('splitzy_groups') || '[]');
+    groups.splice(idx, 1);
+    localStorage.setItem('splitzy_groups', JSON.stringify(groups));
+    this.renderGroups();
+  },
+
+  renderGroups() {
+    const groups = JSON.parse(localStorage.getItem('splitzy_groups') || '[]');
+    const container = document.getElementById('group-list');
+    if (!container) return;
+    container.innerHTML = groups.map((g, i) =>
+      `<button class="btn btn-sm" style="font-size:0.75rem" onclick="App.loadGroup(${i})">${this.escHtml(g.name)} (${g.people.length})</button>`
+    ).join('');
+  },
+
+  generateQR(url) {
+    const qr = qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    document.getElementById('share-qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 4 });
   },
 
   async shareBill() {
@@ -262,6 +309,7 @@ const App = {
       const url = `${location.origin}/s/${data.id}`;
       document.getElementById('share-url-main').value = url;
       document.getElementById('owner-dashboard-link').href = `/s/${data.id}?owner=1`;
+      this.generateQR(url);
       document.getElementById('copy-link-main').onclick = () => {
         navigator.clipboard.writeText(url);
         document.getElementById('copy-link-main').textContent = 'Copied!';

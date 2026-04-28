@@ -26,8 +26,12 @@
             <span class="drop-icon">📸</span>
             <p>Drag & drop a receipt photo here</p>
             <p class="subtle">or</p>
-            <label class="btn" for="file-input">Choose File</label>
+            <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+              <label class="btn" for="file-input">Choose File</label>
+              <label class="btn" for="camera-input">📷 Take Photo</label>
+            </div>
             <input type="file" id="file-input" accept="image/*" hidden>
+            <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
           </div>
         </div>
         <p class="subtle" style="margin-top:12px">Or <a href="#" id="try-sample" class="sample-link">try a sample receipt</a></p>
@@ -73,6 +77,11 @@
             <input type="text" id="person-name-input" placeholder="Name" maxlength="20">
             <button id="add-person-btn" class="btn btn-sm">+ Add</button>
           </div>
+          <div id="group-presets" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <span class="subtle" style="font-size:0.8rem">Groups:</span>
+            <div id="group-list" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+            <button id="save-group-btn" class="btn btn-sm" style="font-size:0.75rem">💾 Save Group</button>
+          </div>
         </div>
         <p class="hint">Click items to assign. Click again to cycle people or share.</p>
         <div id="assignment-list"></div>
@@ -93,6 +102,7 @@
         <button id="share-bill" class="btn btn-primary" style="width:100%;margin-bottom:8px">🔗 Share with Friends</button>
         <div id="share-result" class="hidden" style="margin-bottom:12px;text-align:center">
           <p class="subtle">Link created! Share it with your friends:</p>
+          <div id="share-qr" style="margin:12px auto"></div>
           <div class="add-person" style="margin-top:8px">
             <input type="text" id="share-url-main" readonly style="flex:1;font-size:0.85rem">
             <button id="copy-link-main" class="btn btn-sm">Copy</button>
@@ -107,6 +117,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="js/ocr.js"></script>
   <script src="js/parser.js"></script>
   <script src="js/people.js"></script>
