@@ -212,8 +212,45 @@ const App = {
       this.showStep('summary');
     });
     document.getElementById('back-to-assign').addEventListener('click', () => this.showStep('people'));
+    document.getElementById('share-bill').addEventListener('click', () => this.shareBill());
     document.getElementById('save-pdf').addEventListener('click', () => this.savePDF());
     document.getElementById('start-over').addEventListener('click', () => location.reload());
+  },
+
+  async shareBill() {
+    const btn = document.getElementById('share-bill');
+    btn.disabled = true;
+    btn.textContent = 'Creating link...';
+    try {
+      const venmoUser = document.getElementById('venmo-user').value.trim();
+      const res = await fetch('/api/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: this.state.items.map(it => ({ name: it.name, price: it.price })),
+          tax: this.state.tax,
+          tip: this.state.tip,
+          people: People.list.map(p => p.name),
+          venmoUser,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      const url = `${location.origin}/s/${data.id}`;
+      document.getElementById('share-url-main').value = url;
+      document.getElementById('owner-dashboard-link').href = `/s/${data.id}?owner=1`;
+      document.getElementById('copy-link-main').onclick = () => {
+        navigator.clipboard.writeText(url);
+        document.getElementById('copy-link-main').textContent = 'Copied!';
+        setTimeout(() => document.getElementById('copy-link-main').textContent = 'Copy', 2000);
+      };
+      document.getElementById('share-result').classList.remove('hidden');
+      btn.textContent = '✅ Link Created';
+    } catch (e) {
+      btn.textContent = '🔗 Share with Friends';
+      btn.disabled = false;
+      alert('Failed to create share link: ' + e.message);
+    }
   },
 
   savePDF() {

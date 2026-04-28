@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splitzy — Select Your Items</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header>
+    <h1>🍽️ Splitzy</h1>
+    <p class="tagline">Select the items you had</p>
+  </header>
+
+  <main>
+    <div id="loading" class="card" style="text-align:center;padding:48px">
+      <div class="spinner"></div>
+      <p>Loading bill...</p>
+    </div>
+
+    <div id="expired" class="card hidden" style="text-align:center;padding:48px">
+      <p style="font-size:1.2rem">😕 This link has expired or doesn't exist.</p>
+    </div>
+
+    <!-- Selection view -->
+    <div id="select-view" class="card hidden">
+      <h2>What did you have?</h2>
+      <div class="add-person" style="margin-bottom:16px">
+        <input type="text" id="your-name" placeholder="Your name" maxlength="20">
+        <input type="text" id="your-venmo" placeholder="Venmo username (optional)" maxlength="30">
+      </div>
+      <p class="hint">Tap items you ordered. Shared items will be split.</p>
+      <div id="share-items-list"></div>
+      <div class="totals-editor" style="margin-top:16px">
+        <div class="field"><label>Your items</label><span id="your-subtotal">$0.00</span></div>
+        <div class="field"><label>+ Tax share</label><span id="your-tax">$0.00</span></div>
+        <div class="field"><label>+ Tip share</label><span id="your-tip">$0.00</span></div>
+        <div class="field total"><label>You owe</label><span id="your-total">$0.00</span></div>
+      </div>
+      <button id="submit-btn" class="btn btn-primary" style="width:100%;margin-top:16px">Submit My Selection</button>
+    </div>
+
+    <!-- Submitted confirmation -->
+    <div id="submitted-view" class="card hidden" style="text-align:center">
+      <h2>✅ Submitted!</h2>
+      <p id="submitted-amount" style="font-size:1.5rem;font-weight:700;margin:16px 0"></p>
+      <div id="venmo-link-container" class="hidden">
+        <p>Pay now:</p>
+        <a id="venmo-pay-link" class="btn btn-primary" style="display:inline-block;margin-top:8px" target="_blank">Open Venmo</a>
+      </div>
+    </div>
+
+    <!-- Owner dashboard -->
+    <div id="owner-view" class="card hidden">
+      <h2>📋 Selections</h2>
+      <p class="hint">Share this link with your friends. Refresh to see updates.</p>
+      <div class="add-person" style="margin-bottom:16px">
+        <input type="text" id="share-url" readonly style="flex:1;font-size:0.85rem">
+        <button id="copy-link" class="btn btn-sm">Copy</button>
+      </div>
+      <div id="selections-list"></div>
+      <button id="refresh-btn" class="btn" style="width:100%;margin-top:12px">🔄 Refresh</button>
+    </div>
+  </main>
+
+  <script>
+    const sessionId = location.pathname.split('/s/')[1]?.split('?')[0]?.split('/')[0];
+    const isOwner = new URLSearchParams(location.search).get('owner') === '1';
+    let session = null;
+    let selected = new Set();
+
+    async function load() {
+      try {
+        const res = await fetch(`/api/session?id=${sessionId}`);
+        if (!res.ok) throw new Error();
+        session = await res.json();
+        document.getElementById('loading').classList.add('hidden');
+        if (isOwner) renderOwner();
+        else renderSelect();
+      } catch {
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('expired').classList.remove('hidden');
+      }
+    }
+
+    function renderSelect() {
+      document.getElementById('select-view').classList.remove('hidden');
+      const list = document.getElementById('share-items-list');
+      list.innerHTML = session.items.map((item, i) => {
+        const alreadyTaken = Object.values(session.selections).some(s => s.items.includes(i));
+        return `<div class="assign-row${alreadyTaken ? ' assigned' : ''}" data-idx="${i}" onclick="toggleItem(${i})">
+          <span class="item-check">${selected.has(i) ? '☑' : '☐'}</span>
+          <span class="item-name">${esc(item.name)}</span>
+          <span class="item-price">$${item.price.toFixed(2)}</span>
+          ${alreadyTaken ? '<span class="shared-badge">taken</span>' : ''}
+        </div>`;
+      }).join('');
+      updateYourTotal();
+    }
+
+    function toggleItem(i) {
+      if (selected.has(i)) selected.delete(i); else selected.add(i);
+      renderSelect();
+    }
+
+    function updateYourTotal() {
+      const subtotal = session.items.reduce((s, it, i) => s + (selected.has(i) ? it.price : 0), 0);
+      const billSubtotal = session.items.reduce((s, it) => s + it.price, 0);
+      const ratio = billSubtotal > 0 ? subtotal / billSubtotal : 0;
+      const tax = +(session.tax * ratio).toFixed(2);
+      const tip = +(session.tip * ratio).toFixed(2);
+      const total = +(subtotal + tax + tip).toFixed(2);
+      document.getElementById('your-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+      document.getElementById('your-tax').textContent = `$${tax.toFixed(2)}`;
+      document.getElementById('your-tip').textContent = `$${tip.toFixed(2)}`;
+      document.getElementById('your-total').textContent = `$${total.toFixed(2)}`;
+    }
+
+    document.getElementById('submit-btn')?.addEventListener('click', async () => {
+      const name = document.getElementById('your-name').value.trim();
+      if (!name) { alert('Please enter your name'); return; }
+      const venmo = document.getElementById('your-venmo').value.trim();
+      const res = await fetch(`/api/session?id=${sessionId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, venmo, selectedItems: [...selected] }),
+      });
+      if (res.ok) {
+        document.getElementById('select-view').classList.add('hidden');
+        const sub = document.getElementById('submitted-view');
+        sub.classList.remove('hidden');
+        const total = document.getElementById('your-total').textContent;
+        document.getElementById('submitted-amount').textContent = `You owe ${total}`;
+        // Show Venmo pay link if owner provided their venmo
+        if (session.venmoUser) {
+          const amount = total.replace('$', '');
+          const note = encodeURIComponent('Splitzy bill split');
+          const link = `https://venmo.com/${session.venmoUser}?txn=pay&amount=${amount}&note=${note}`;
+          document.getElementById('venmo-pay-link').href = link;
+          document.getElementById('venmo-link-container').classList.remove('hidden');
+        }
+      }
+    });
+
+    function renderOwner() {
+      document.getElementById('owner-view').classList.remove('hidden');
+      const url = `${location.origin}/s/${sessionId}`;
+      document.getElementById('share-url').value = url;
+      document.getElementById('copy-link').onclick = () => {
+        navigator.clipboard.writeText(url);
+        document.getElementById('copy-link').textContent = 'Copied!';
+        setTimeout(() => document.getElementById('copy-link').textContent = 'Copy', 2000);
+      };
+
+      const billSubtotal = session.items.reduce((s, it) => s + it.price, 0);
+      const list = document.getElementById('selections-list');
+      const entries = Object.entries(session.selections);
+      if (!entries.length) {
+        list.innerHTML = '<p class="subtle">No one has selected yet.</p>';
+        return;
+      }
+      list.innerHTML = entries.map(([name, sel]) => {
+        const sub = sel.items.reduce((s, i) => s + (session.items[i]?.price || 0), 0);
+        const ratio = billSubtotal > 0 ? sub / billSubtotal : 0;
+        const tax = +(session.tax * ratio).toFixed(2);
+        const tip = +(session.tip * ratio).toFixed(2);
+        const total = +(sub + tax + tip).toFixed(2);
+        const venmoLink = session.venmoUser && sel.venmo
+          ? `<a href="venmo://paycharge?txn=charge&recipients=${sel.venmo}&amount=${total}&note=${encodeURIComponent('Splitzy: bill split')}" class="btn btn-sm" style="margin-left:8px">Request $${total}</a>`
+          : sel.venmo ? `<span class="subtle">@${esc(sel.venmo)}</span>` : '';
+        return `<div class="summary-card" style="border-color:#4ecdc4">
+          <h3>${esc(name)} ${venmoLink}</h3>
+          <div class="summary-items">${sel.items.map(i => {
+            const it = session.items[i];
+            return it ? `<div class="row"><span>${esc(it.name)}</span><span>$${it.price.toFixed(2)}</span></div>` : '';
+          }).join('')}</div>
+          <div class="summary-subtotals">
+            <div class="row"><span>Subtotal</span><span>$${sub.toFixed(2)}</span></div>
+            <div class="row"><span>Tax</span><span>$${tax.toFixed(2)}</span></div>
+            <div class="row"><span>Tip</span><span>$${tip.toFixed(2)}</span></div>
+          </div>
+          <div class="summary-total" style="border-color:#4ecdc4"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+        </div>`;
+      }).join('');
+    }
+
+    document.getElementById('refresh-btn')?.addEventListener('click', load);
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    if (sessionId) load();
+    else { document.getElementById('loading').classList.add('hidden'); document.getElementById('expired').classList.remove('hidden'); }
+  </script>
+</body>
+</html>

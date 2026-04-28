@@ -83,6 +83,18 @@
         <div id="unassigned-warning" class="warning hidden">⚠️ Some items are unassigned!</div>
         <div id="summary-cards"></div>
         <div id="total-check" class="total-check"></div>
+        <div class="add-person" style="margin-bottom:12px">
+          <input type="text" id="venmo-user" placeholder="Your Venmo username (for requests)" maxlength="30">
+        </div>
+        <button id="share-bill" class="btn btn-primary" style="width:100%;margin-bottom:8px">🔗 Share with Friends</button>
+        <div id="share-result" class="hidden" style="margin-bottom:12px;text-align:center">
+          <p class="subtle">Link created! Share it with your friends:</p>
+          <div class="add-person" style="margin-top:8px">
+            <input type="text" id="share-url-main" readonly style="flex:1;font-size:0.85rem">
+            <button id="copy-link-main" class="btn btn-sm">Copy</button>
+          </div>
+          <a id="owner-dashboard-link" class="btn btn-sm" style="margin-top:8px;display:inline-block">View Dashboard →</a>
+        </div>
         <button id="back-to-assign" class="btn">← Back to Assignment</button>
         <button id="save-pdf" class="btn btn-primary">📄 Save as PDF</button>
         <button id="start-over" class="btn">Start Over</button>
