@@ -138,8 +138,40 @@ const App = {
     }).join('');
   },
 
-  // --- Summary (stub for Step 4) ---
-  renderSummary() {},
+  // --- Summary ---
+  renderSummary() {
+    const results = Calculator.calculate(this.state.items, People.list, this.state.tax, this.state.tip);
+    const unassigned = this.state.items.filter(it => !it.assignedTo.length);
+    const warn = document.getElementById('unassigned-warning');
+    warn.classList.toggle('hidden', !unassigned.length);
+    if (unassigned.length) warn.textContent = `⚠️ ${unassigned.length} item(s) unassigned: ${unassigned.map(it => it.name).join(', ')}`;
+
+    document.getElementById('summary-cards').innerHTML = results.map(r => `
+      <div class="summary-card" style="border-color:${r.person.color}">
+        <h3><span class="avatar-sm" style="background:${r.person.color}">${People.initials(r.person.name)}</span> ${this.escHtml(r.person.name)}</h3>
+        <div class="summary-items">
+          ${r.items.map(it => `<div class="row${it.shared ? ' shared' : ''}"><span>${this.escHtml(it.name)}${it.shared ? ` (÷${it.sharedWith})` : ''}</span><span>$${it.share.toFixed(2)}</span></div>`).join('')}
+        </div>
+        <div class="summary-subtotals">
+          <div class="row"><span>Subtotal</span><span>$${r.subtotal.toFixed(2)}</span></div>
+          <div class="row"><span>Tax</span><span>$${r.tax.toFixed(2)}</span></div>
+          <div class="row"><span>Tip</span><span>$${r.tip.toFixed(2)}</span></div>
+        </div>
+        <div class="summary-total" style="border-color:${r.person.color}"><span>Total</span><span>$${r.total.toFixed(2)}</span></div>
+      </div>`).join('');
+
+    const billTotal = this.state.items.reduce((s, it) => s + it.price, 0) + this.state.tax + this.state.tip;
+    const splitTotal = results.reduce((s, r) => s + r.total, 0);
+    const diff = Math.abs(billTotal - splitTotal);
+    const check = document.getElementById('total-check');
+    if (diff < 0.02) {
+      check.className = 'total-check match';
+      check.textContent = `✓ Totals match: $${splitTotal.toFixed(2)}`;
+    } else {
+      check.className = 'total-check mismatch';
+      check.textContent = `✗ Split total $${splitTotal.toFixed(2)} vs bill $${billTotal.toFixed(2)} (diff: $${diff.toFixed(2)})`;
+    }
+  },
 
   bindNavigation() {
     document.getElementById('add-item-btn').addEventListener('click', () => this.addItem());
