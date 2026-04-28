@@ -55,17 +55,16 @@ const OCR = {
 
         ctx.putImageData(imageData, 0, 0);
 
-        // Sharpen using convolution
+        // Gentle sharpen
         const sharpened = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const src = new Uint8ClampedArray(d);
         const w = canvas.width;
-        // Unsharp mask kernel: center=5, neighbors=-1
         for (let y = 1; y < canvas.height - 1; y++) {
           for (let x = 1; x < w - 1; x++) {
             const idx = (y * w + x) * 4;
-            const val = 5 * src[idx]
-              - src[idx - 4] - src[idx + 4]
-              - src[idx - w * 4] - src[idx + w * 4];
+            const val = 3 * src[idx]
+              - 0.5 * src[idx - 4] - 0.5 * src[idx + 4]
+              - 0.5 * src[idx - w * 4] - 0.5 * src[idx + w * 4];
             sharpened.data[idx] = sharpened.data[idx + 1] = sharpened.data[idx + 2] =
               Math.min(255, Math.max(0, val));
           }
@@ -86,10 +85,6 @@ const OCR = {
       logger: (m) => {
         if (m.status === 'recognizing text' && onProgress) onProgress(m.progress);
       }
-    });
-    await worker.setParameters({
-      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$.,&'()/-+#: %\n",
-      tessedit_pageseg_mode: '6', // Assume uniform block of text
     });
     const { data } = await worker.recognize(canvas);
     await worker.terminate();
